@@ -18,6 +18,7 @@
 # 26 May 2017 = LCJ / initial code
 # 27 Nov 2017 = LCJ / updated for python3, added av_red_loc option
 # 05 Dec 2017 = LCJ / add age-dependent dust distribution
+# 21 Jun 2019 = LCJ / add option to define lambda range (dust law compatability)
 #
 ##############################################
 
@@ -49,6 +50,7 @@ add_spectral_properties_kwargs = dict(filternames=filters + additional_filters)
 def make_specgrid(specfile='syncmd_spec.grid.hd5',
                   fakein='syncmd_final-loz_parsec.fits',
                   distanceModulus=18.96, zsol=0.0142,
+                  trimspec=False, grngspec=[1.15e3,3.0e4],
                   use_btsettl=False, btsettl_medres=False):
     """
     Create spectral grid from FAKE output
@@ -92,6 +94,12 @@ def make_specgrid(specfile='syncmd_spec.grid.hd5',
     spgrid = creategrid.add_spectral_properties(spgrid, nameformat=nameformat,
                                                 **add_spectral_properties_kwargs)
 
+    # Trim spec for good extLaw range
+    if trimspec:
+        sel = ((spgrid.lamb > grngspec[0]) & (spgrid.lamb < grngspec[1]))
+        spgrid.lamb=spgrid.lamb[sel]
+        spgrid.seds=spgrid.seds[:,sel]
+
     # Write out file, remove if it exists
     try:
         os.remove(specfile)
@@ -99,7 +107,7 @@ def make_specgrid(specfile='syncmd_spec.grid.hd5',
         pass
     spgrid.writeHDF(specfile)
 
-    
+
 def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
                  specfile='syncmd_spec.grid.hd5',
                  astfile='ast_half1+3_wbg.fits',
@@ -165,7 +173,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     # Compute Orig Fluxes + Mags (w/o Av + Dmod Shifts)
     av0_results = spgrid.getSEDs(filters)
     mag_av0 = ((-2.5)*np.log10(av0_results.seds[:]/vega_flux))
-    
+
     ### Set Distance Modulus Distribution
 
     # Calc Constants
@@ -207,9 +215,9 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     av_tot = av + av_fg
 
     print('f_red = {:5.3f}'.format(f_red))
-    
+
     ###########################################
-    
+
     # Redden Spectra
     if useF99dust:
         extLaw = extinction.Fitzpatrick99()
@@ -222,16 +230,16 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     extLawMW = extinction.Fitzpatrick99()
     extLawMW_Av1 = extLawMW.function(spgrid.lamb[:], 1.0)
     spgrid.seds *= np.exp(-1. * (av_fg * extLawMW_Av1))
-    
+
     sed_results = spgrid.getSEDs(filters)
     flux_avonly = sed_results.seds[:].copy()
     mag_raw_av = ((-2.5)*np.log10(flux_avonly/vega_flux))
-    
+
     # Add Distance Offset
     spgrid.seds = spgrid.seds * 10.**(-0.4*dmod_offset[:,np.newaxis])
 
     mag_raw_dm = mag_av0.copy() + dmod_offset[:,np.newaxis]
-    
+
     # Compute SEDs
     cols = {'Av': np.empty(N, dtype=float), 'Dmod_offset': np.empty(N, dtype=float)}
             #'Rv': np.empty(N, dtype=float),
@@ -281,7 +289,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
 
     # Add Observational Noise + Completeness
     mag_raw = g.seds[:].copy()
-    
+
     flux = sed_results.seds[:]
     N, M = flux.shape
 
@@ -321,7 +329,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
         mag_out_obs[nondetect, i] = np.nan
 
     g.seds[:] = mag_out_obs
-    
+
     # Write out HD5 SED file if param given, remove if it exists
     if sedfilegrid is None:
         pass
@@ -340,7 +348,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
         filters_syn.append(f.split('_')[-1].upper() + '_SYN')
         filters_raw.append(f.split('_')[-1].upper() + '_RAW')
         filters_av0.append(f.split('_')[-1].upper() + '_ORIG')
-        
+
     data = apyTable()
     for i, f in enumerate(filters_syn):
         data[f] = mag_out_obs[:,i]
@@ -374,6 +382,6 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     data.meta['extlaw'] = extLaw.name
     data.meta['specfile'] = specfile
     data.meta['astfile'] = astfile
-    
+
     # Write FITS file, remove if it exists
     data.write(sedfile, overwrite=True)
