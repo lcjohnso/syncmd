@@ -6,19 +6,15 @@
 # make_specgrid
 # make_sedgrid
 #
-# Notes:
-# +Import assumptions (filters, avg DM) are set in DATAMODEL ITEMS block
-# +Code defaults to overwriting output files
+# Notes
+# 1)Import assumptions (filters, avg DM) are set in DATAMODEL ITEMS block
+# 2) Code defaults to overwriting output files
 #
-# ToDo:
-# +Output noisemodel data?
-# +Save spec info to header (BTSettle, hi/lo res, etc)?
-#
-# Updates:
-# 26 May 2017 = LCJ / initial code
-# 27 Nov 2017 = LCJ / updated for python3, added av_red_loc option
-# 05 Dec 2017 = LCJ / add age-dependent dust distribution
-# 21 Jun 2019 = LCJ / add option to define lambda range (dust law compatability)
+# Example
+# import run_syncmd
+# run_syncmd.make_specgrid(specfile='syncmd_spec_hi.grid.hd5')
+# run_syncmd.make_sedgrid(sedfile='syncmd_sedsobs.fits',
+#                         specfile='syncmd_spec_hi.grid.hd5')
 #
 ##############################################
 
