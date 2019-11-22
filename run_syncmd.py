@@ -111,7 +111,7 @@ def make_specgrid(specfile='syncmd_spec.grid.hd5',
 def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
                  specfile='syncmd_spec.grid.hd5',
                  astfile='ast_half1+3_wbg.fits',
-                 av_fg=0.18, av_red_mean=0.4, av_red_loc=0.0, av_red_sig=0.55,
+                 av_fg=0.18, av_red_median=0.4, av_red_loc=0.0, av_red_sig=0.55,
                  av_unred_max=0.0, dmod_sig_old=0.15, dust_dmod_relative=-0.1,
                  sclh_ratio_max=10., sclh_ratio_min=1.,sclh_loga_transition=8.5,
                  useF99dust=False,
@@ -141,8 +141,9 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
         input file for ASTs; format = .fits
     av_fg: float
         foreground (MW) Av in magnitudes; default = 0.1 mag
-    av_red_mean: float
-        mean of lognormal dist. for Av in magnitudes; default = 0.5 mag
+    av_red_median: float
+        median of lognormal dist. for Av in magnitudes; where
+        av_red_mean = av_red_median * exp(av_red_sig**2./2.0); default = 0.5 mag
     av_red_loc: floag
         zeropoint of lognormal dist.; default = 0.0 mag
     av_red_sig: float
@@ -204,12 +205,12 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     dmod_offset = (dmod_offset_raw * idmod_sig) + idmod_off
 
     # Set Av Distribution
-    # Current: Lognormal w/ mean=av_red_mean, sigma=av_red_sig
+    # Current: Lognormal w/ median=av_red_median, sigma=av_red_sig
     #   -Dust Pos = dust_dmod_relative, sets f_red
     #   -Foreground Pop = Uniform from Av=0-av_unred_max
     #   -MW Foreground = av_fg added to all sources
     av_draw = scipy.stats.lognorm.rvs(av_red_sig,loc=av_red_loc,
-                                      scale=av_red_mean,size=N)
+                                      scale=av_red_median,size=N)
     #av[np.where(av < 0.0)] = 0.0 #Clip negative Av tail
 
     # Assign Av via Z distribution
@@ -285,7 +286,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     g = SpectralGrid(_lamb, seds=_seds, grid=Table(cols), backend='memory')
     g.grid.header['filters'] = ' '.join(filters)
     g.grid.header['av_fg'] = av_fg
-    g.grid.header['av_red_mean'] = av_red_mean
+    g.grid.header['av_red_median'] = av_red_median
     g.grid.header['av_red_loc'] = av_red_loc
     g.grid.header['av_red_sig'] = av_red_sig
     g.grid.header['av_unred_max'] = av_unred_max
@@ -384,7 +385,7 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
 
     # Header Info
     data.meta['av_fg'] = av_fg
-    data.meta['av1_mean'] = av_red_mean
+    data.meta['av1_median'] = av_red_median
     data.meta['av1_sig'] = av_red_sig
     data.meta['av0_max'] = av_unred_max
     data.meta['dmod'] = distanceModulus
