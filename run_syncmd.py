@@ -121,6 +121,12 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     Create SED grid from spectral grid, applying dust attenuation and
     distance shifts.  Write output SEDs into a FITS file.
 
+    Model includes age-dependent extinction, implemented as a simple two
+    component model (young stars, old stars; divided at age defined by
+    sclh_loga_transition) where variables are linked:
+    1) dmod_sig_old sets maximum DM, 2) dmod_sig_dust set by dmod_sig_old &
+    sclh_ratio_max, 3) dmod_sig_yng set by dmod_sig_dust & sclh_ratio_min
+
     Parameters
     ----------
 
@@ -152,9 +158,15 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
         offset of dust from average distance, given in mag w.r.t. average
         distance modulus; default=-0.05 mag
 
-    sclh_ratio_max = 10.
-    sclh_ratio_min = 1.
-    sclh_loga_transition = 8.5
+    sclh_ratio_max: float
+        for step-function scale height model, this is large value adopted at
+        old ages when dust is in thin plane with respect to dust; default = 10.
+    sclh_ratio_min: float
+        for step function scale height model, this is small value adopted at
+        young ages when stars and dust are well-mixed; default = 1.
+    sclh_loga_transition: float
+        log(age/yr) of step-function transition point for scale height
+        difference; default = 8.5
 
     output_raw_cols: boolean
         flag to add RAW and ORIG columns to output file
