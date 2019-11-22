@@ -292,6 +292,8 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     g.grid.header['av_unred_max'] = av_unred_max
     g.grid.header['dmod'] = distanceModulus
     g.grid.header['dmod_sig_old'] = dmod_sig_old
+    g.grid.header['dmod_sig_yng'] = dmod_sig_yng
+    g.grid.header['sclh_loga_transition'] = sclh_loga_transition
     g.grid.header['dust_dmod_relative'] = dust_dmod_relative
     g.grid.header['f_red'] = f_red
     g.grid.header['extlaw'] = extLaw.name
@@ -390,6 +392,8 @@ def make_sedgrid(sedfile='syncmd_sedsobs.fits', sedfilegrid=None,
     data.meta['av0_max'] = av_unred_max
     data.meta['dmod'] = distanceModulus
     data.meta['dmod_sig_old'] = dmod_sig_old
+    data.meta['dmod_sig_yng'] = dmod_sig_old
+    data.meta['sclh_loga_transition'] = sclh_loga_transition
     data.meta['dmod_rel'] = dust_dmod_relative
     data.meta['f_red'] = f_red
     data.meta['extlaw'] = extLaw.name
